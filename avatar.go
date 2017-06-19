@@ -42,7 +42,7 @@ func (c *Generator) Gen(name string) (string, error) {
 	c.context.DrawCircle(c.radius, c.radius, c.radius)
 
 	// random background color
-	// rand.Seed(int64(l))
+	rand.Seed(int64(l))
 	bgColor := bgColors[rand.Intn(l)]
 	c.context.SetHexColor(bgColor)
 	c.context.Fill()
