@@ -2,7 +2,8 @@ package avatar
 
 import (
 	"errors"
-	"math/rand"
+	"fmt"
+	"sync"
 	"unicode"
 
 	"github.com/fogleman/gg"
@@ -10,8 +11,10 @@ import (
 
 // Generator use to generate avatar
 type Generator struct {
+	sync.Mutex
 	radius  float64
 	context *gg.Context
+	idx     int
 }
 
 var bgColors = [...]string{`#F44336`, `#E91E63`, `#9C27B0`, `#673AB7`, `#3F51B5`, `#2196F3`, `#009688`, `#4CAF50`, `#F57F17`, `#795548`, `#424242`}
@@ -23,14 +26,19 @@ func New(radius float64, fontFacePath string, fontFacePoints float64) (*Generato
 	if err != nil {
 		return nil, err
 	}
-	return &Generator{radius, c}, nil
+	return &Generator{radius: radius, context: c, idx: 0}, nil
 }
 
 // Gen generate avatar image. if success will return image file path.
 func (c *Generator) Gen(name string) (string, error) {
+	c.Lock()
+	defer c.Unlock()
+
 	if c.context == nil {
 		return ``, errors.New(`Generator must be initial by [func New(radius)]`)
 	}
+
+	fmt.Println(name)
 
 	r := []rune(name) // 可能有中文字
 	l := len(r)
@@ -42,8 +50,12 @@ func (c *Generator) Gen(name string) (string, error) {
 	c.context.DrawCircle(c.radius, c.radius, c.radius)
 
 	// random background color
-	rand.Seed(int64(l))
-	bgColor := bgColors[rand.Intn(l)]
+	if c.idx == len(bgColors) {
+		c.idx = 0
+	}
+	bgColor := bgColors[c.idx]
+	c.idx++
+
 	c.context.SetHexColor(bgColor)
 	c.context.Fill()
 
@@ -63,10 +75,13 @@ func (c *Generator) Gen(name string) (string, error) {
 		rs = r
 	}
 
-	c.context.DrawStringAnchored(string(rs), c.radius, c.radius, 0.5, 0.5) // center
+	str := string(rs)
+	fmt.Printf(`name: %s, str: %s`, name, str)
+	fmt.Println()
+	c.context.DrawStringAnchored(str, c.radius, c.radius, 0.5, 0.5) // center
 	c.context.Stroke()
 
-	out := name + `.png`
+	out := str + `.png`
 	return out, c.context.SavePNG(out)
 }
 
