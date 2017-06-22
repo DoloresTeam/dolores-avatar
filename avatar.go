@@ -76,8 +76,6 @@ func (c *Generator) Gen(name string) (string, error) {
 	}
 
 	str := string(rs)
-	fmt.Printf(`name: %s, str: %s`, name, str)
-	fmt.Println()
 	c.context.DrawStringAnchored(str, c.radius, c.radius, 0.5, 0.5) // center
 	c.context.Stroke()
 
